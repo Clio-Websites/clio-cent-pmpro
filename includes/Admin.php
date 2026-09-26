@@ -149,7 +149,10 @@ class Admin
             </tr>
             <tr>
                 <th><?php esc_html_e('Needs a specific level', 'clio-cent-pmpro'); ?></th>
-                <td><input type="text" name="pmpro_messages[specific]" value="<?php echo esc_attr($messages['specific']); ?>" placeholder="<?php echo esc_attr($defaults['specific']); ?>" class="large-text"></td>
+                <td>
+                    <input type="text" name="pmpro_messages[specific]" value="<?php echo esc_attr($messages['specific']); ?>" placeholder="<?php echo esc_attr($defaults['specific']); ?>" class="large-text">
+                    <p class="description"><?php esc_html_e('{level} is replaced with the qualifying level\'s name(s), e.g. "Membership {level} required".', 'clio-cent-pmpro'); ?></p>
+                </td>
             </tr>
         </table>
         <p class="description"><?php esc_html_e('Leave a message empty to use the default shown as its placeholder.', 'clio-cent-pmpro'); ?></p>

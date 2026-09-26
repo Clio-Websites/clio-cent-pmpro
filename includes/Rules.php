@@ -93,6 +93,21 @@ class Rules
         return array_values(array_filter(array_map('absint', explode(',', $csv))));
     }
 
+    /** @param int[] $levelIds */
+    private function levelNames(array $levelIds): string
+    {
+        $names = array_filter(array_map(
+            static function (int $id): string {
+                $level = function_exists('pmpro_getLevel') ? pmpro_getLevel($id) : null;
+
+                return $level ? (string) $level->name : '';
+            },
+            $levelIds
+        ));
+
+        return implode(', ', $names);
+    }
+
     /** @param array<int,mixed> $levels */
     private function packLevels(array $levels): string
     {
@@ -119,13 +134,15 @@ class Rules
             return pmpro_hasMembershipLevel(null, $userId) ? null : $messages['any'];
         }
 
-        foreach ($this->unpackLevels((string) $rule->restrict_levels) as $levelId) {
+        $levelIds = $this->unpackLevels((string) $rule->restrict_levels);
+
+        foreach ($levelIds as $levelId) {
             if (pmpro_hasMembershipLevel($levelId, $userId)) {
                 return null;
             }
         }
 
-        return $messages['specific'];
+        return str_replace('{level}', $this->levelNames($levelIds), $messages['specific']);
     }
 
     /**
