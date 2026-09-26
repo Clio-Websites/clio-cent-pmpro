@@ -126,7 +126,9 @@ class Admin
 
     public function renderSettingsTab(): void
     {
-        $mode = Settings::displayMode();
+        $mode     = Settings::displayMode();
+        $messages = Settings::messages();
+        $defaults = Settings::defaultMessages();
         ?>
         <h2><?php esc_html_e('Restricted tickets', 'clio-cent-pmpro'); ?></h2>
         <table class="form-table" role="presentation">
@@ -137,12 +139,27 @@ class Admin
                     <p><label><input type="radio" name="pmpro_display_mode" value="hide" <?php checked($mode, 'hide'); ?>> <?php esc_html_e('Hide the ticket entirely', 'clio-cent-pmpro'); ?></label></p>
                 </td>
             </tr>
+            <tr>
+                <th><?php esc_html_e('Not logged in', 'clio-cent-pmpro'); ?></th>
+                <td><input type="text" name="pmpro_messages[login]" value="<?php echo esc_attr($messages['login']); ?>" placeholder="<?php echo esc_attr($defaults['login']); ?>" class="large-text"></td>
+            </tr>
+            <tr>
+                <th><?php esc_html_e('Needs any membership', 'clio-cent-pmpro'); ?></th>
+                <td><input type="text" name="pmpro_messages[any]" value="<?php echo esc_attr($messages['any']); ?>" placeholder="<?php echo esc_attr($defaults['any']); ?>" class="large-text"></td>
+            </tr>
+            <tr>
+                <th><?php esc_html_e('Needs a specific level', 'clio-cent-pmpro'); ?></th>
+                <td><input type="text" name="pmpro_messages[specific]" value="<?php echo esc_attr($messages['specific']); ?>" placeholder="<?php echo esc_attr($defaults['specific']); ?>" class="large-text"></td>
+            </tr>
         </table>
+        <p class="description"><?php esc_html_e('Leave a message empty to use the default shown as its placeholder.', 'clio-cent-pmpro'); ?></p>
         <?php
     }
 
     public function saveSettingsTab(): void
     {
-        Settings::save(sanitize_key((string) ($_POST['pmpro_display_mode'] ?? 'reason')));
+        $messages = array_map('sanitize_text_field', wp_unslash((array) ($_POST['pmpro_messages'] ?? [])));
+
+        Settings::save(sanitize_key((string) ($_POST['pmpro_display_mode'] ?? 'reason')), $messages);
     }
 }

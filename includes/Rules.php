@@ -109,12 +109,14 @@ class Rules
             return null;
         }
 
+        $messages = Settings::messages();
+
         if ($userId <= 0) {
-            return __('This ticket is for members only. Please log in.', 'clio-cent-pmpro');
+            return $messages['login'];
         }
 
         if ($rule->restrict_mode === 'any') {
-            return pmpro_hasMembershipLevel(null, $userId) ? null : __('This ticket is for members only.', 'clio-cent-pmpro');
+            return pmpro_hasMembershipLevel(null, $userId) ? null : $messages['any'];
         }
 
         foreach ($this->unpackLevels((string) $rule->restrict_levels) as $levelId) {
@@ -123,7 +125,7 @@ class Rules
             }
         }
 
-        return __('This ticket is only available to certain membership levels.', 'clio-cent-pmpro');
+        return $messages['specific'];
     }
 
     /**
