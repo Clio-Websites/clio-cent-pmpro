@@ -51,7 +51,7 @@ class Rules
             'restrict_levels' => $restrictMode === 'specific' ? $this->packLevels((array) ($input['restrict_levels'] ?? [])) : '',
             'discount_mode'   => $discountMode,
             'discount_type'   => $discountType,
-            'discount_amount' => $discountMode === 'none' ? 0 : absint($input['discount_amount'] ?? 0),
+            'discount_amount' => $this->discountAmount($discountMode, $discountType, (string) ($input['discount_amount'] ?? '')),
             'discount_levels' => $discountMode === 'specific' ? $this->packLevels((array) ($input['discount_levels'] ?? [])) : '',
         ];
 
@@ -65,6 +65,19 @@ class Rules
             $data['updated_at'] = $now;
             $wpdb->insert(Schema::table(), $data);
         }
+    }
+
+    /**
+     * A percent is a plain 0-100 integer; a fixed amount is what the admin typed in the
+     * event's own currency ("5.00"), converted to minor units the same way ticket prices are.
+     */
+    private function discountAmount(string $mode, string $type, string $input): int
+    {
+        if ($mode === 'none') {
+            return 0;
+        }
+
+        return $type === 'fixed' ? \Clio\Cent\Money::toMinor($input) : min(100, absint($input));
     }
 
     public function delete(int $ticketTypeId): void

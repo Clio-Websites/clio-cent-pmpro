@@ -7,6 +7,8 @@
  * @var object[]    $levels  PMPro's own level objects (id, name).
  */
 
+use Clio\Cent\Money;
+
 defined('ABSPATH') || exit;
 
 $id            = (int) $ticket->id;
@@ -14,7 +16,9 @@ $name          = static fn (string $key) => "pmpro_rules[{$id}][{$key}]";
 $restrictMode  = $rule->restrict_mode ?? 'none';
 $discountMode  = $rule->discount_mode ?? 'none';
 $discountType  = $rule->discount_type ?? 'percent';
-$discountAmt   = $rule ? (int) $rule->discount_amount : 0;
+$discountAmt   = $rule
+    ? ($discountType === 'fixed' ? Money::toInput((int) $rule->discount_amount) : (string) (int) $rule->discount_amount)
+    : '';
 $restrictIds   = $rule ? array_map('absint', array_filter(explode(',', (string) $rule->restrict_levels))) : [];
 $discountIds   = $rule ? array_map('absint', array_filter(explode(',', (string) $rule->discount_levels))) : [];
 ?>
@@ -54,8 +58,8 @@ $discountIds   = $rule ? array_map('absint', array_filter(explode(',', (string) 
             <?php endif; ?>
             <p>
                 <label><input type="radio" name="<?php echo esc_attr($name('discount_type')); ?>" value="percent" <?php checked($discountType, 'percent'); ?>> <?php esc_html_e('Percent off', 'clio-cent-pmpro'); ?></label>
-                <label><input type="radio" name="<?php echo esc_attr($name('discount_type')); ?>" value="fixed" <?php checked($discountType, 'fixed'); ?>> <?php esc_html_e('Fixed amount off (minor units)', 'clio-cent-pmpro'); ?></label>
-                <input type="number" min="0" name="<?php echo esc_attr($name('discount_amount')); ?>" value="<?php echo esc_attr($discountAmt); ?>" class="small-text">
+                <label><input type="radio" name="<?php echo esc_attr($name('discount_type')); ?>" value="fixed" <?php checked($discountType, 'fixed'); ?>> <?php esc_html_e('Fixed amount off', 'clio-cent-pmpro'); ?></label>
+                <input type="text" inputmode="decimal" name="<?php echo esc_attr($name('discount_amount')); ?>" value="<?php echo esc_attr($discountAmt); ?>" class="small-text" placeholder="<?php echo esc_attr(Money::toInput(0)); ?>">
             </p>
         </div>
     </div>
