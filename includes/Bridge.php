@@ -23,6 +23,27 @@ class Bridge
         add_filter('clio_cent_can_user_book_ticket', [$this, 'checkRestriction'], 10, 4);
         add_filter('clio_cent_get_user_ticket_price', [$this, 'applyDiscount'], 10, 3);
         add_filter('clio_cent_event_tickets', [$this, 'maybeHideTickets'], 10, 3);
+        add_action('pmpro_member_links_bottom', [$this, 'renderMemberLink']);
+    }
+
+    /**
+     * PMPro's own account page only shows its "Member Links" section at all when something is
+     * hooked to pmpro_member_links_top/bottom — this puts "My Bookings" right there for anyone
+     * who has set a My Bookings page in Clio CENT -> Settings -> General.
+     */
+    public function renderMemberLink(): void
+    {
+        $pageId = (int) \Clio\Cent\Plugin::getInstance()->settings->get('my_bookings_page_id');
+
+        if ($pageId <= 0 || get_post_status($pageId) !== 'publish') {
+            return;
+        }
+
+        printf(
+            '<li class="pmpro_list_item"><a href="%s">%s</a></li>',
+            esc_url(get_permalink($pageId)),
+            esc_html__('My Bookings', 'clio-cent-pmpro')
+        );
     }
 
     /**
