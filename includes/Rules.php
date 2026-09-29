@@ -77,7 +77,7 @@ class Rules
             return 0;
         }
 
-        return $type === 'fixed' ? \Clio\Cent\Money::toMinor($input) : min(100, absint($input));
+        return $type === 'fixed' ? \Clio\CentPro\Money::toMinor($input) : min(100, absint($input));
     }
 
     public function delete(int $ticketTypeId): void

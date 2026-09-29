@@ -24,13 +24,13 @@ class Admin
 
     public function register(): void
     {
-        add_action('clio_cent_event_form_after_tickets', [$this, 'renderFields']);
-        add_action('clio_cent_event_saved', [$this, 'saveFields']);
-        add_action('clio_cent_ticket_type_deleted', [$this, 'onTicketDeleted']);
+        add_action('clio_centpro_event_form_after_tickets', [$this, 'renderFields']);
+        add_action('clio_centpro_event_saved', [$this, 'saveFields']);
+        add_action('clio_centpro_ticket_type_deleted', [$this, 'onTicketDeleted']);
 
-        add_filter('clio_cent_settings_tabs', [$this, 'addSettingsTab']);
-        add_action('clio_cent_settings_tab_' . self::TAB, [$this, 'renderSettingsTab']);
-        add_action('clio_cent_save_settings_tab_' . self::TAB, [$this, 'saveSettingsTab']);
+        add_filter('clio_centpro_settings_tabs', [$this, 'addSettingsTab']);
+        add_action('clio_centpro_settings_tab_' . self::TAB, [$this, 'renderSettingsTab']);
+        add_action('clio_centpro_save_settings_tab_' . self::TAB, [$this, 'saveSettingsTab']);
     }
 
     // -------------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ class Admin
 
         $levels = pmpro_getAllLevels(true, true);
 
-        echo '<div class="clio-cent-card">';
+        echo '<div class="clio-centpro-card">';
         echo '<h2>' . esc_html__('Membership (PMPro)', 'clio-cent-pmpro') . '</h2>';
         echo '<style>
             .clio-cent-pmpro-rule { border: 1px solid #dcdcde; border-radius: 4px; padding: 12px 16px 16px; margin: 0 0 16px; }
@@ -63,7 +63,7 @@ class Admin
             return;
         }
 
-        $tickets = \Clio\Cent\Plugin::getInstance()->tickets->forEvent((int) $event->id);
+        $tickets = \Clio\CentPro\Plugin::getInstance()->tickets->forEvent((int) $event->id);
 
         if (! $tickets) {
             echo '<p class="description">' . esc_html__('Add a ticket type first.', 'clio-cent-pmpro') . '</p></div>';
@@ -93,7 +93,7 @@ class Admin
 
         $ticketIds = array_map(
             static fn ($t) => (int) $t->id,
-            \Clio\Cent\Plugin::getInstance()->tickets->forEvent($eventId)
+            \Clio\CentPro\Plugin::getInstance()->tickets->forEvent($eventId)
         );
 
         foreach ($posted as $ticketId => $row) {

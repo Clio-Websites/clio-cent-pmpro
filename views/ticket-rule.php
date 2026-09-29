@@ -1,13 +1,13 @@
 <?php
 /**
- * View: one ticket's membership rule, on the event edit screen (clio_cent_event_form_after_tickets).
+ * View: one ticket's membership rule, on the event edit screen (clio_centpro_event_form_after_tickets).
  *
  * @var object      $ticket
  * @var object|null $rule
  * @var object[]    $levels  PMPro's own level objects (id, name).
  */
 
-use Clio\Cent\Money;
+use Clio\CentPro\Money;
 
 defined('ABSPATH') || exit;
 

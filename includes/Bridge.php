@@ -20,9 +20,9 @@ class Bridge
 
     public function register(): void
     {
-        add_filter('clio_cent_can_user_book_ticket', [$this, 'checkRestriction'], 10, 4);
-        add_filter('clio_cent_get_user_ticket_price', [$this, 'applyDiscount'], 10, 3);
-        add_filter('clio_cent_event_tickets', [$this, 'maybeHideTickets'], 10, 3);
+        add_filter('clio_centpro_can_user_book_ticket', [$this, 'checkRestriction'], 10, 4);
+        add_filter('clio_centpro_get_user_ticket_price', [$this, 'applyDiscount'], 10, 3);
+        add_filter('clio_centpro_event_tickets', [$this, 'maybeHideTickets'], 10, 3);
         add_action('pmpro_member_links_bottom', [$this, 'renderMemberLink']);
     }
 
@@ -33,7 +33,7 @@ class Bridge
      */
     public function renderMemberLink(): void
     {
-        $pageId = (int) \Clio\Cent\Plugin::getInstance()->settings->get('my_bookings_page_id');
+        $pageId = (int) \Clio\CentPro\Plugin::getInstance()->settings->get('my_bookings_page_id');
 
         if ($pageId <= 0 || get_post_status($pageId) !== 'publish') {
             return;

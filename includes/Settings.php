@@ -6,8 +6,8 @@ defined('ABSPATH') || exit;
 
 /**
  * Whether a restricted ticket a person doesn't qualify for disappears entirely, or still shows,
- * greyed out, with its reason (clio_cent_can_user_book_ticket already does the latter on its
- * own — this only controls whether clio_cent_event_tickets also hides it) — plus the wording of
+ * greyed out, with its reason (clio_centpro_can_user_book_ticket already does the latter on its
+ * own — this only controls whether clio_centpro_event_tickets also hides it) — plus the wording of
  * that reason, since the defaults are a bit dry for customer-facing copy.
  */
 class Settings
