@@ -5,9 +5,9 @@ namespace Clio\CentPmpro;
 defined('ABSPATH') || exit;
 
 /**
- * Where a rule actually takes effect: refuse or discount a ticket, and — only when Settings ->
- * Membership is set to "hide" — remove a restricted ticket from the page entirely instead of
- * showing it greyed out with its reason.
+ * Where a rule actually takes effect: refuse or discount a ticket or a service, and — only when
+ * Settings -> Membership is set to "hide" — remove a restricted ticket from the event page (or a
+ * restricted service from the services page) instead of showing it greyed out with its reason.
  */
 class Bridge
 {
@@ -23,6 +23,11 @@ class Bridge
         add_filter('clio_centpro_can_user_book_ticket', [$this, 'checkRestriction'], 10, 4);
         add_filter('clio_centpro_get_user_ticket_price', [$this, 'applyDiscount'], 10, 3);
         add_filter('clio_centpro_event_tickets', [$this, 'maybeHideTickets'], 10, 3);
+
+        // Services (appointments): the same rules, the same way.
+        add_filter('clio_centpro_can_user_book_service', [$this, 'checkServiceRestriction'], 10, 3);
+        add_filter('clio_centpro_get_user_service_price', [$this, 'applyServiceDiscount'], 10, 3);
+        add_filter('clio_centpro_listed_services', [$this, 'maybeHideServices'], 10, 3);
         add_action('pmpro_member_links_bottom', [$this, 'renderMemberLink']);
     }
 
@@ -72,6 +77,44 @@ class Bridge
         }
 
         return max(0, $price - $this->plugin->rules->discountFor($rule, $userId, $price));
+    }
+
+    /**
+     * @param true|\WP_Error|false $allowed
+     * @return true|\WP_Error|false
+     */
+    public function checkServiceRestriction($allowed, object $service, int $userId)
+    {
+        $rule   = $this->plugin->rules->findForService((int) $service->id);
+        $reason = $rule ? $this->plugin->rules->restrictionReason($rule, $userId) : null;
+
+        return $reason === null ? $allowed : new \WP_Error('clio_cent_pmpro_restricted', $reason);
+    }
+
+    public function applyServiceDiscount(int $price, object $service, int $userId): int
+    {
+        $rule = $this->plugin->rules->findForService((int) $service->id);
+
+        return $rule ? max(0, $price - $this->plugin->rules->discountFor($rule, $userId, $price)) : $price;
+    }
+
+    /**
+     * "Hide" display mode: services this visitor may not book are left off the services page.
+     *
+     * @param object[] $services
+     * @return object[]
+     */
+    public function maybeHideServices(array $services, object $employee, int $userId): array
+    {
+        if (Settings::displayMode() !== 'hide') {
+            return $services;
+        }
+
+        return array_values(array_filter($services, function ($service) use ($userId) {
+            $rule = $this->plugin->rules->findForService((int) $service->id);
+
+            return ! $rule || $this->plugin->rules->restrictionReason($rule, $userId) === null;
+        }));
     }
 
     /**

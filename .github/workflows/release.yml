@@ -1,0 +1,110 @@
+name: Release
+
+# Two ways this fires:
+#   1. Push a tag "vX.Y.Z" (matching the plugin header version) — an official
+#      versioned release. Used when the plugin version gets bumped. Also
+#      publishes a stable "clio-cent-pmpro-latest.zip" asset so there's always
+#      a fixed URL pointing at whatever's newest.
+#   2. Push a tag "release-*", or click "Run workflow" above — an ad-hoc
+#      snapshot release off whatever is currently on main, tagged as a
+#      pre-release so it never gets mistaken for a real version bump, and
+#      never touches the "-latest" asset.
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'release-*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine release metadata
+        id: meta
+        run: |
+          set -euo pipefail
+
+          HEADER_VERSION=$(grep -m1 "Version:" clio-cent-pmpro.php | sed -E 's/.*Version:[[:space:]]*//')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            TAG="manual-$(date -u +%Y%m%d-%H%M%S)"
+            SNAPSHOT=true
+          elif [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+            SNAPSHOT=false
+          else
+            TAG="${GITHUB_REF_NAME}"
+            SNAPSHOT=true
+          fi
+
+          if [[ "${SNAPSHOT}" == "true" ]]; then
+            VERSION="${HEADER_VERSION}-snapshot.$(date -u +%Y%m%d).${SHORT_SHA}"
+            NAME="clio-cent-pmpro snapshot ${VERSION}"
+          else
+            VERSION="${TAG#v}"
+            NAME="clio-cent-pmpro v${VERSION}"
+          fi
+
+          echo "tag=${TAG}"             >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"     >> "$GITHUB_OUTPUT"
+          echo "name=${NAME}"           >> "$GITHUB_OUTPUT"
+          echo "prerelease=${SNAPSHOT}" >> "$GITHUB_OUTPUT"
+
+          # Changelog: accumulated commit messages since the previous tag
+          # (any kind — release or snapshot), so it reads as "what's new".
+          PREV_TAG=$(git describe --tags --abbrev=0 "HEAD^" 2>/dev/null || echo "")
+
+          if [[ -n "${PREV_TAG}" ]]; then
+            CHANGELOG=$(git log "${PREV_TAG}..HEAD" --pretty=format:'- %s (%h)' --no-merges)
+            [[ -z "${CHANGELOG}" ]] && CHANGELOG="No changes since ${PREV_TAG}."
+          else
+            CHANGELOG=$(git log HEAD --pretty=format:'- %s (%h)' --no-merges)
+          fi
+
+          DELIM="CHANGELOG_$(date +%s%N)"
+          {
+            echo "changelog<<${DELIM}"
+            echo "${CHANGELOG}"
+            echo "${DELIM}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin zip
+        id: build
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ steps.meta.outputs.version }}"
+          ZIP="clio-cent-pmpro-${VERSION}.zip"
+          git archive --prefix=clio-cent-pmpro/ -o "${ZIP}" HEAD
+
+          ASSETS="${ZIP}"
+
+          if [[ "${{ steps.meta.outputs.prerelease }}" == "false" ]]; then
+            cp "${ZIP}" clio-cent-pmpro-latest.zip
+            ASSETS="${ASSETS}"$'\n'"clio-cent-pmpro-latest.zip"
+          fi
+
+          DELIM="ASSETS_$(date +%s%N)"
+          {
+            echo "assets<<${DELIM}"
+            echo "${ASSETS}"
+            echo "${DELIM}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.name }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          body: ${{ steps.meta.outputs.changelog }}
+          files: ${{ steps.build.outputs.assets }}

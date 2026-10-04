@@ -3,7 +3,7 @@
  * Plugin Name: Clio CENT — PMPro Bridge
  * Plugin URI:  https://cliowebsites.com
  * Description: Members-only tickets and member discounts for Clio CENT Pro, using Paid Memberships Pro. Requires both plugins active.
- * Version:     0.1.1
+ * Version:     1.0.0
  * Author:      csdev@cliowebsites
  * Author URI:  https://cliowebsites.com
  * License:     Commercial
